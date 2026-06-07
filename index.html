@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自習室オールラウンド 利用申込</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #06c755;
+      color: #fff;
+      padding: 16px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: bold;
+      letter-spacing: 0.05em;
+    }
+
+    header p {
+      font-size: 12px;
+      margin-top: 4px;
+      opacity: 0.85;
+    }
+
+    main {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+
+    .profile-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .profile-block img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #e0e0e0;
+    }
+
+    .profile-block .info {
+      flex: 1;
+    }
+
+    .profile-block .name {
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .profile-block .uid {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+      word-break: break-all;
+    }
+
+    .loading-msg {
+      font-size: 13px;
+      color: #888;
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #06c755;
+      margin-bottom: 14px;
+      border-left: 3px solid #06c755;
+      padding-left: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #444;
+    }
+
+    label .required {
+      color: #e53935;
+      margin-left: 4px;
+      font-size: 11px;
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      color: #333;
+      background: #fafafa;
+      appearance: none;
+      -webkit-appearance: none;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus,
+    input[type="tel"]:focus,
+    select:focus {
+      border-color: #06c755;
+      background: #fff;
+    }
+
+    .select-wrapper {
+      position: relative;
+    }
+
+    .select-wrapper::after {
+      content: "▾";
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #888;
+      pointer-events: none;
+      font-size: 14px;
+    }
+
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 24px 16px;
+      text-align: center;
+      background: #fafafa;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .upload-area:hover,
+    .upload-area.dragover {
+      border-color: #06c755;
+      background: #f0fdf4;
+    }
+
+    .upload-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-area .icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .upload-area .label {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .upload-area .hint {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    #preview-wrapper {
+      display: none;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    #preview-wrapper img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+
+    #preview-wrapper .file-info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 6px;
+    }
+
+    #preview-wrapper .remove-btn {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #e53935;
+      background: none;
+      border: 1px solid #e53935;
+      border-radius: 6px;
+      padding: 4px 12px;
+      cursor: pointer;
+    }
+
+    canvas {
+      display: none;
+    }
+
+    .error-msg {
+      font-size: 11px;
+      color: #e53935;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      background: #06c755;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.2s, opacity 0.2s;
+    }
+
+    .submit-btn:hover {
+      background: #05a847;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .notice {
+      font-size: 11px;
+      color: #999;
+      text-align: center;
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    /* Success / Error overlay */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .overlay.show {
+      display: flex;
+    }
+
+    .dialog {
+      background: #fff;
+      border-radius: 14px;
+      padding: 30px 24px;
+      max-width: 320px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .dialog .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .dialog h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .dialog p {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .dialog button {
+      margin-top: 20px;
+      padding: 12px 32px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .dialog .ok-btn {
+      background: #06c755;
+      color: #fff;
+    }
+
+    .dialog .err-btn {
+      background: #e53935;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>自習室オールラウンド</h1>
+  <p>利用申込フォーム</p>
+</header>
+
+<main>
+  <!-- LINEプロフィール表示 -->
+  <div class="card">
+    <div id="profile-loading" class="loading-msg">LINEアカウントを確認中...</div>
+    <div id="profile-info" class="profile-block" style="display:none;">
+      <img id="profile-picture" src="" alt="プロフィール画像">
+      <div class="info">
+        <div class="name" id="profile-name"></div>
+        <div class="uid" id="profile-uid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 申込フォーム -->
+  <form id="apply-form" novalidate>
+    <div class="card">
+      <div class="section-title">申込者情報</div>
+
+      <div class="form-group">
+        <label for="name">氏名<span class="required">必須</span></label>
+        <input type="text" id="name" name="name" placeholder="例：山田 太郎" autocomplete="name">
+        <div class="error-msg" id="err-name">氏名を入力してください</div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">電話番号<span class="required">必須</span></label>
+        <input type="tel" id="phone" name="phone" placeholder="例：09012345678" autocomplete="tel">
+        <div class="error-msg" id="err-phone">有効な電話番号を入力してください</div>
+      </div>
+
+      <div class="form-group">
+        <label for="grade">学年<span class="required">必須</span></label>
+        <div class="select-wrapper">
+          <select id="grade" name="grade">
+            <option value="">選択してください</option>
+            <option value="中1">中学1年生</option>
+            <option value="中2">中学2年生</option>
+            <option value="中3">中学3年生</option>
+            <option value="高1">高校1年生</option>
+            <option value="高2">高校2年生</option>
+            <option value="高3">高校3年生</option>
+          </select>
+        </div>
+        <div class="error-msg" id="err-grade">学年を選択してください</div>
+      </div>
+
+      <div class="form-group">
+        <label for="room">利用希望室<span class="required">必須</span></label>
+        <div class="select-wrapper">
+          <select id="room" name="room">
+            <option value="">選択してください</option>
+            <option value="前橋室">前橋室</option>
+            <option value="高崎室">高崎室</option>
+            <option value="貝沢町室">貝沢町室</option>
+            <option value="桐生室">桐生室</option>
+          </select>
+        </div>
+        <div class="error-msg" id="err-room">利用希望室を選択してください</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">学生証アップロード</div>
+
+      <div class="form-group">
+        <label>学生証の画像<span class="required">必須</span></label>
+        <div class="upload-area" id="upload-area">
+          <input type="file" id="student-card" name="student_card" accept="image/jpeg,image/png">
+          <div class="icon">📷</div>
+          <div class="label">タップして画像を選択</div>
+          <div class="hint">JPG / PNG（5MB以下に自動圧縮）</div>
+        </div>
+        <div id="preview-wrapper">
+          <img id="preview-img" src="" alt="プレビュー">
+          <div class="file-info" id="file-info"></div>
+          <button type="button" class="remove-btn" id="remove-btn">削除</button>
+        </div>
+        <div class="error-msg" id="err-image">学生証の画像を選択してください</div>
+        <canvas id="resize-canvas"></canvas>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="submit-btn">申し込む</button>
+    <p class="notice">送信内容はLINEアカウントと紐づけて管理されます。</p>
+  </form>
+</main>
+
+<!-- 送信完了ダイアログ -->
+<div class="overlay" id="success-overlay">
+  <div class="dialog">
+    <div class="icon">✅</div>
+    <h2>申込完了</h2>
+    <p>ご申込ありがとうございます。<br>確認後、LINEよりご連絡いたします。</p>
+    <button class="ok-btn" onclick="document.getElementById('success-overlay').classList.remove('show')">閉じる</button>
+  </div>
+</div>
+
+<!-- エラーダイアログ -->
+<div class="overlay" id="error-overlay">
+  <div class="dialog">
+    <div class="icon">❌</div>
+    <h2>送信エラー</h2>
+    <p id="error-detail">送信に失敗しました。<br>時間をおいて再度お試しください。</p>
+    <button class="err-btn" onclick="document.getElementById('error-overlay').classList.remove('show')">閉じる</button>
+  </div>
+</div>
+
+<script>
+  const LIFF_ID = "2010316340";
+  const SUBMIT_URL = "https://example.com/api/apply"; // TODO: 実際の送信先URLに変更
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_IMAGE_DIMENSION = 1920;
+
+  let lineUserId = null;
+  let lineDisplayName = null;
+  let resizedImageBase64 = null;
+
+  // ---- LIFF 初期化 ----
+  liff.init({ liffId: LIFF_ID })
+    .then(() => {
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+      return liff.getProfile();
+    })
+    .then(profile => {
+      if (!profile) return;
+      lineUserId = profile.userId;
+      lineDisplayName = profile.displayName;
+
+      document.getElementById("profile-loading").style.display = "none";
+      document.getElementById("profile-info").style.display = "flex";
+      document.getElementById("profile-name").textContent = profile.displayName;
+      document.getElementById("profile-uid").textContent = "LINE ID: " + profile.userId;
+
+      const pic = document.getElementById("profile-picture");
+      if (profile.pictureUrl) {
+        pic.src = profile.pictureUrl;
+      } else {
+        pic.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Ccircle cx='24' cy='24' r='24' fill='%23ccc'/%3E%3C/svg%3E";
+      }
+    })
+    .catch(err => {
+      document.getElementById("profile-loading").textContent = "LINEログインに失敗しました";
+      console.error(err);
+    });
+
+  // ---- 画像選択・リサイズ ----
+  const fileInput = document.getElementById("student-card");
+  const uploadArea = document.getElementById("upload-area");
+  const previewWrapper = document.getElementById("preview-wrapper");
+  const previewImg = document.getElementById("preview-img");
+  const fileInfoEl = document.getElementById("file-info");
+  const canvas = document.getElementById("resize-canvas");
+  const ctx = canvas.getContext("2d");
+
+  fileInput.addEventListener("change", handleFileSelect);
+
+  document.getElementById("remove-btn").addEventListener("click", () => {
+    fileInput.value = "";
+    resizedImageBase64 = null;
+    previewWrapper.style.display = "none";
+    uploadArea.style.display = "block";
+  });
+
+  // drag & drop
+  uploadArea.addEventListener("dragover", e => { e.preventDefault(); uploadArea.classList.add("dragover"); });
+  uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("dragover"));
+  uploadArea.addEventListener("drop", e => {
+    e.preventDefault();
+    uploadArea.classList.remove("dragover");
+    const file = e.dataTransfer.files[0];
+    if (file) processImageFile(file);
+  });
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) processImageFile(file);
+  }
+
+  function processImageFile(file) {
+    if (!["image/jpeg", "image/png"].includes(file.type)) {
+      showFieldError("err-image", "JPGまたはPNG形式の画像を選択してください");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        // リサイズ計算
+        let w = img.width;
+        let h = img.height;
+        if (w > MAX_IMAGE_DIMENSION || h > MAX_IMAGE_DIMENSION) {
+          if (w > h) { h = Math.round(h * MAX_IMAGE_DIMENSION / w); w = MAX_IMAGE_DIMENSION; }
+          else { w = Math.round(w * MAX_IMAGE_DIMENSION / h); h = MAX_IMAGE_DIMENSION; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+
+        // 品質を下げて5MB以内に収める
+        let quality = 0.85;
+        let base64;
+        const mime = file.type === "image/png" ? "image/jpeg" : file.type;
+        do {
+          base64 = canvas.toDataURL(mime, quality);
+          quality -= 0.1;
+        } while (base64.length * 0.75 > MAX_FILE_SIZE && quality > 0.1);
+
+        resizedImageBase64 = base64;
+
+        // プレビュー表示
+        previewImg.src = base64;
+        const sizeKB = Math.round(base64.length * 0.75 / 1024);
+        fileInfoEl.textContent = `${file.name}　${w}×${h}px　約${sizeKB}KB`;
+        previewWrapper.style.display = "block";
+        uploadArea.style.display = "none";
+        hideFieldError("err-image");
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ---- バリデーション ----
+  function showFieldError(id, msg) {
+    const el = document.getElementById(id);
+    if (msg) el.textContent = msg;
+    el.style.display = "block";
+    return false;
+  }
+
+  function hideFieldError(id) {
+    document.getElementById(id).style.display = "none";
+    return true;
+  }
+
+  function validate() {
+    let ok = true;
+    const name = document.getElementById("name").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const grade = document.getElementById("grade").value;
+    const room = document.getElementById("room").value;
+
+    ok = name ? hideFieldError("err-name") : showFieldError("err-name");
+    ok = /^[0-9\-\+\(\)\s]{7,15}$/.test(phone) ? hideFieldError("err-phone") : showFieldError("err-phone") && ok;
+    ok = grade ? hideFieldError("err-grade") : showFieldError("err-grade") && ok;
+    ok = room ? hideFieldError("err-room") : showFieldError("err-room") && ok;
+    ok = resizedImageBase64 ? hideFieldError("err-image") : showFieldError("err-image") && ok;
+
+    return ok;
+  }
+
+  // ---- フォーム送信 ----
+  document.getElementById("apply-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    if (!validate()) return;
+
+    const btn = document.getElementById("submit-btn");
+    btn.disabled = true;
+    btn.textContent = "送信中...";
+
+    const payload = {
+      line_user_id: lineUserId,
+      line_display_name: lineDisplayName,
+      name: document.getElementById("name").value.trim(),
+      phone: document.getElementById("phone").value.trim(),
+      grade: document.getElementById("grade").value,
+      room: document.getElementById("room").value,
+      student_card_image: resizedImageBase64,
+      submitted_at: new Date().toISOString()
+    };
+
+    try {
+      const res = await fetch(SUBMIT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      document.getElementById("success-overlay").classList.add("show");
+      document.getElementById("apply-form").reset();
+      resizedImageBase64 = null;
+      previewWrapper.style.display = "none";
+      uploadArea.style.display = "block";
+    } catch (err) {
+      document.getElementById("error-detail").textContent =
+        "送信に失敗しました（" + err.message + "）\n時間をおいて再度お試しください。";
+      document.getElementById("error-overlay").classList.add("show");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "申し込む";
+    }
+  });
+</script>
+</body>
+</html>
